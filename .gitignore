@@ -6,3 +6,13 @@ node_modules/
 *.log
 dist/
 coverage/
+
+# Exam material and music stay local (copyrighted / not ours to publish)
+*.pdf
+*.wav
+*.mp3
+*.m4a
+*.aac
+*.ogg
+*.flac
+docs/exam/

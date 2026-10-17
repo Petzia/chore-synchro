@@ -1,0 +1,14 @@
+{
+  "name": "chore-synchro",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Artistic swimming choreography player synchronized with music.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "start": "python3 -m http.server 8000"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
