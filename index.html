@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; media-src blob:; base-uri 'none'; form-action 'none'">
+  <meta name="color-scheme" content="light dark">
+  <title>Chorégraphie synchro – Bloody Mary</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/print.css" media="print">
+  <script type="module" src="js/main.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <h1 id="title">Chorégraphie synchro</h1>
+    <p class="print-only" id="print-info"></p>
+  </header>
+
+  <main>
+    <section class="stage" aria-label="Lecteur et animation">
+      <div class="transport">
+        <div class="file-picker">
+          <label class="button" for="audio-file">Charger la musique…</label>
+          <input id="audio-file" class="visually-hidden" type="file" accept="audio/*,.wav,.mp3">
+          <span id="audio-name" class="muted">Aucun fichier (la musique reste sur ton appareil)</span>
+        </div>
+
+        <div class="controls" role="group" aria-label="Lecture">
+          <button id="play" type="button" disabled aria-keyshortcuts="Space">▶ Lecture</button>
+          <label>Vitesse
+            <select id="speed">
+              <option value="0.5">0,5×</option>
+              <option value="0.75">0,75×</option>
+              <option value="1" selected>1×</option>
+            </select>
+          </label>
+          <button id="prev-eight" type="button" aria-keyshortcuts="ArrowLeft" title="Reculer d'un huit (←)">« 8</button>
+          <button id="next-eight" type="button" aria-keyshortcuts="ArrowRight" title="Avancer d'un huit (→)">8 »</button>
+        </div>
+
+        <div class="seek">
+          <label for="seek" class="visually-hidden">Position dans la chanson</label>
+          <input id="seek" type="range" min="0" max="240" step="0.05" value="0">
+          <output id="song-time" for="seek">0:00.0</output>
+        </div>
+
+        <div class="controls" role="group" aria-label="Boucle A–B">
+          <button id="loop-a" type="button" title="Début de boucle = maintenant">A</button>
+          <button id="loop-b" type="button" title="Fin de boucle = maintenant">B</button>
+          <button id="loop-step" type="button">Boucler l'étape</button>
+          <button id="loop-toggle" type="button" aria-pressed="false">Boucle : off</button>
+          <span id="loop-info" class="muted"></span>
+        </div>
+      </div>
+
+      <div class="readouts">
+        <div class="chrono" id="chrono" data-state="poolside">
+          <span class="chrono-label">Chrono examen</span>
+          <span class="chrono-time" id="chrono-time">—</span>
+          <span class="chrono-status" id="chrono-status">Au bord du bassin</span>
+        </div>
+        <div class="count">
+          <span class="chrono-label">Comptes</span>
+          <span class="count-value" id="count-value">—</span>
+          <span class="beat-dots" id="beat-dots" aria-hidden="true"></span>
+        </div>
+        <div class="current-step">
+          <span class="chrono-label">Étape en cours</span>
+          <span id="current-element">—</span>
+          <span id="current-head" class="muted"></span>
+        </div>
+      </div>
+
+      <div class="views">
+        <figure class="view">
+          <canvas id="pool-view" role="img" aria-label="Bassin vu du dessus : position, orientation et regard des 5 nageurs. Le jury est en bas."></canvas>
+          <figcaption>
+            Vue du dessus, le jury est en bas.
+            <label class="inline"><input type="checkbox" id="zoom"> Zoom sur la zone de jeu</label>
+          </figcaption>
+        </figure>
+        <figure class="view">
+          <canvas id="profile-view" role="img" aria-label="Vue de profil depuis le jury : qui est en surface et qui est sous l'eau."></canvas>
+          <figcaption>Vue de profil (depuis le jury) : surface et profondeur.</figcaption>
+        </figure>
+        <ul id="swimmer-status" class="swimmer-status" aria-label="Position de chaque nageur"></ul>
+        <details class="legend">
+          <summary>Légende</summary>
+          <ul>
+            <li><strong>Cercle avec initiales</strong> = la tête. <strong>Cône</strong> = direction du regard.</li>
+            <li><strong>Rayons autour de la tête</strong> = regard au plafond. <strong>Tête barrée</strong> = visage dans l'eau.</li>
+            <li><strong>Trait épais</strong> = buste ; <strong>deux traits</strong> = jambes (écartées pour l'étoile).</li>
+            <li><strong>Rond sur les jambes</strong> = genou ou jambe levé(e) (plus il est grand, plus la jambe est haute).</li>
+            <li><strong>Pointillés et transparence</strong> = sous l'eau. La liste sous la vue de profil donne la position de chacun.</li>
+          </ul>
+        </details>
+      </div>
+    </section>
+
+    <section class="panel settings" aria-labelledby="settings-title">
+      <h2 id="settings-title">Réglages</h2>
+      <form id="settings-form" novalidate>
+        <fieldset>
+          <legend>Musique</legend>
+          <label>T0 – entrée dans l'eau (s dans la chanson)
+            <input id="t0" type="number" min="0" max="600" step="0.01" inputmode="decimal">
+          </label>
+          <button id="t0-now" type="button">T0 = position actuelle</button>
+          <label>Tempo (BPM)
+            <input id="bpm" type="number" min="40" max="240" step="0.1" inputmode="decimal">
+          </label>
+          <div class="controls">
+            <button id="tap" type="button">Tap tempo</button>
+            <button id="bpm-double" type="button" title="Doubler le tempo">×2</button>
+            <button id="bpm-half" type="button" title="Diviser le tempo par deux">÷2</button>
+          </div>
+          <p class="hint">Tape sur « Tap tempo » à chaque temps. Si le résultat semble deux fois trop lent ou rapide, utilise ×2 ou ÷2.</p>
+        </fieldset>
+        <fieldset>
+          <legend>Bassin (mètres)</legend>
+          <label>Longueur <input id="pool-length" type="number" min="10" max="60" step="0.5" inputmode="decimal"></label>
+          <label>Largeur <input id="pool-width" type="number" min="5" max="30" step="0.5" inputmode="decimal"></label>
+        </fieldset>
+        <fieldset>
+          <legend>Nageurs</legend>
+          <div id="swimmer-fields" class="swimmer-fields"></div>
+        </fieldset>
+        <button id="reset-settings" type="button">Réinitialiser les réglages</button>
+      </form>
+
+      <h2>Vérification de la chorégraphie</h2>
+      <div id="validation" aria-live="polite"></div>
+    </section>
+
+    <section class="panel table-panel" aria-labelledby="table-title">
+      <div class="table-toolbar">
+        <h2 id="table-title">Tableau de la chorégraphie</h2>
+        <label>Mes mouvements :
+          <select id="focus">
+            <option value="">Toute l'équipe</option>
+          </select>
+        </label>
+        <label class="inline"><input type="checkbox" id="follow" checked> Suivre la lecture</label>
+        <button id="print" type="button">Imprimer</button>
+      </div>
+      <p class="hint">Clique sur une ligne (ou Entrée sur l'heure) pour aller à ce moment. P = bord du bassin ; « 12 · 5 » = 12ᵉ huit, temps 5.</p>
+      <p id="team-legend" class="team-legend"></p>
+      <div class="table-scroll" id="table-scroll" tabindex="0" aria-label="Tableau défilant">
+        <table id="choreo-table">
+          <caption class="visually-hidden">Étapes de la chorégraphie</caption>
+          <thead></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer muted">
+    Raccourcis : Espace = lecture/pause, ← → = un huit en arrière/avant.
+  </footer>
+</body>
+</html>
