@@ -63,7 +63,12 @@ function start() {
   }
 
   function pool() {
-    return { length: app.settings.poolLength, width: app.settings.poolWidth };
+    return {
+      length: app.settings.poolLength,
+      width: app.settings.poolWidth,
+      depthLeft: app.settings.depthLeft,
+      depthRight: app.settings.depthRight,
+    };
   }
 
   function team() {
@@ -118,7 +123,7 @@ function start() {
       const beat = songTimeToBeat(time, timing());
       const stepIndex = findStepIndex(model.steps, beat);
       const swimmers = team().map((swimmer) => ({ ...swimmer, pose: poseAt(model, swimmer.id, beat) }));
-      const view = { pool: pool(), swimmers, focus: app.settings.focus, palette: app.palette };
+      const view = { pool: pool(), swimmers, focus: app.settings.focus, palette: app.palette, beat };
 
       // On the deck, show the whole pool; in the water, zoom on the area used by the routine.
       const zoomed = elements.zoom.checked && beat >= 0;
