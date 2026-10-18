@@ -91,7 +91,17 @@ function figure(pose) {
     case 'sitting':
       return { hips: DECK_HEIGHT, segments: [[[0, 0], [0, 0.6]], [[0, 0], [0.2 * u, -0.6]]], head: [0, 0.85], shoulders: [0, 0.55] };
     case 'vertical':
-      return { hips: -0.9 + sink, segments: [[[0, 0], [0, 0.75]], [[0, 0], [0, -0.9]]], head: [0, 1.05], shoulders: [0, 0.7] };
+      // Eggbeater: shoulders at the surface, knees out, feet well above a 1.4 m floor.
+      return {
+        hips: -0.65 + sink,
+        segments: [
+          [[0, 0], [0, 0.65]],
+          [[0, 0], [0.3, -0.3]], [[0.3, -0.3], [0.15, -0.55]],
+          [[0, 0], [-0.3, -0.3]], [[-0.3, -0.3], [-0.15, -0.55]],
+        ],
+        head: [0, 0.9],
+        shoulders: [0, 0.6],
+      };
     case 'tuck':
       return { hips: -0.15 + sink, ball: 0.35, head: [0.45 * u, 0.1], rotate: true };
     case 'pike':

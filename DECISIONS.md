@@ -96,8 +96,14 @@ Changes:
   to the public (`STAGE_Y = 1`, i.e. about 6 m from their side).
 - **Arms**: new `arms` pose field (drawn in both views) and a "Bras / mains" column.
   Never two arms out of the water while swimming (only on the deck and during the lift).
-  The "dance with my hands" wave is at 13.1, to move onto the real chorus once its
-  time in the cut is known.
+- **Chorus dance** (times given by the user, in water counts): the chorus starts at 5.1
+  and 19.1, the "H" of "hands" falls on 5.5, 7.5, 19.5 and 21.5. The same short dance is
+  repeated each time to make it easier to learn (count 3 head right, count 5 right hand
+  up and waving towards the public, count 7 arm back in the water). It is written once,
+  as the `handsDance()` function in the data file. The oyster moved earlier (17.1) and the
+  somersault is now done all together (20.5) to fit around the chorus.
+- **No standing** in the shallow end (rule): upright swimmers are eggbeating; only A
+  touches the floor during the lift, which is allowed.
 - **Lift**: new `elevation` pose field; the side view draws the sloping floor, and
   swimmers in the shallow end stand on it.
 - Final pose: a fan facing the public, Mary at the tip with one arm up, the four
