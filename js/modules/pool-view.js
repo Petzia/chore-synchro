@@ -3,6 +3,7 @@
 
 import { toRadians } from './angles.js';
 import { drawLabel, fitCanvas } from './canvas-utils.js';
+import { armDirection, armSpecs, canShowArms, drawingOrder } from './figure-geometry.js';
 
 const DECK_MARGIN = 2.5;
 const JUDGES_MARGIN = 2.2;
@@ -20,6 +21,7 @@ export function createPoolView(canvas) {
      * @param {string} frame.focus id of the highlighted swimmer, or ''
      * @param {object|null} frame.zoomBox {minX, maxX, minY, maxY} in metres; null = whole pool
      * @param {object} frame.palette
+     * @param {number} frame.beat current beat, to animate waving hands
      * @returns {{minX: number, maxX: number}} the horizontal range shown, in metres
      */
     render(frame) {
@@ -34,10 +36,9 @@ export function createPoolView(canvas) {
       ctx.setTransform(dpr * scale, 0, 0, dpr * scale, -box.minX * dpr * scale, -box.minY * dpr * scale);
 
       drawPool(ctx, frame.pool, px, frame.palette);
-      const ordered = [...frame.swimmers].sort((a, b) => b.pose.depth - a.pose.depth);
-      for (const swimmer of ordered) {
+      for (const swimmer of drawingOrder(frame.swimmers)) {
         const dimmed = frame.focus !== '' && frame.focus !== swimmer.id;
-        drawSwimmer(ctx, swimmer, px, frame.palette, dimmed);
+        drawSwimmer(ctx, swimmer, px, frame.palette, dimmed, frame.beat);
       }
       if (box.maxY < frame.pool.width / 2 + 1) drawJudgesBand(ctx, box, px, frame.palette);
       return { minX: box.minX, maxX: box.maxX };
@@ -101,7 +102,7 @@ function drawPool(ctx, pool, px, palette) {
   ctx.font = `700 ${13 * px}px system-ui, sans-serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('▲  JURY  ▲', 0, halfW + 1.1);
+  ctx.fillText('▲  JURY ET PUBLIC  ▲', 0, halfW + 1.1);
   ctx.font = `${11 * px}px system-ui, sans-serif`;
   ctx.fillStyle = palette.muted;
   ctx.fillText('Bord de départ', 0, -halfW - 2.1);
@@ -116,10 +117,10 @@ function drawJudgesBand(ctx, box, px, palette) {
   ctx.font = `700 ${11 * px}px system-ui, sans-serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('▼  côté JURY  ▼', (box.minX + box.maxX) / 2, box.maxY - height / 2);
+  ctx.fillText('▼  côté JURY ET PUBLIC  ▼', (box.minX + box.maxX) / 2, box.maxY - height / 2);
 }
 
-function drawSwimmer(ctx, swimmer, px, palette, dimmed) {
+function drawSwimmer(ctx, swimmer, px, palette, dimmed, beat) {
   const { pose, color, initials } = swimmer;
   const heading = toRadians(pose.heading);
   const dir = { x: Math.cos(heading), y: Math.sin(heading) };
@@ -162,6 +163,10 @@ function drawSwimmer(ctx, swimmer, px, palette, dimmed) {
       head = hips;
   }
 
+  if (canShowArms(pose)) {
+    const shoulders = pose.body === 'back' || pose.body === 'front' ? at(0.5) : hips;
+    drawArms(ctx, pose, beat, { shoulders, head, dir }, limb, px, color, palette);
+  }
   drawGaze(ctx, head, pose.gaze, headRadius, px, color, palette);
   disc(ctx, head, headRadius, color, palette, px);
   ctx.setLineDash([]);
@@ -205,6 +210,36 @@ function drawLyingBody(ctx, pose, at, heading, limb, color, palette) {
     ctx.stroke();
   }
   return at(0.8);
+}
+
+/** Arms out of the water. Seen from above, a raised arm is just a hand. */
+function drawArms(ctx, pose, beat, { shoulders, head, dir }, limb, px, color, palette) {
+  const handRadius = Math.max(0.12, 4.5 * px);
+  for (const spec of armSpecs(pose, beat)) {
+    const side = toRadians(armDirection(pose, { ...spec, kind: 'side' }));
+    const sideVec = { x: Math.cos(side), y: Math.sin(side) };
+    const shoulder = { x: shoulders.x + sideVec.x * 0.25, y: shoulders.y + sideVec.y * 0.25 };
+    let hand;
+    if (spec.kind === 'up') {
+      hand = {
+        x: shoulder.x + sideVec.x * 0.1 + dir.x * spec.sway * 0.25,
+        y: shoulder.y + sideVec.y * 0.1 + dir.y * spec.sway * 0.25,
+      };
+    } else if (spec.kind === 'claw') {
+      hand = { x: head.x + dir.x * 0.35 + sideVec.x * 0.15, y: head.y + dir.y * 0.35 + sideVec.y * 0.15 };
+    } else {
+      const angle = toRadians(armDirection(pose, spec));
+      const reach = spec.kind === 'point' ? 0.8 : 0.65;
+      hand = { x: shoulder.x + Math.cos(angle) * reach, y: shoulder.y + Math.sin(angle) * reach };
+      stroke(ctx, shoulder, hand, limb * 0.8, color, palette);
+    }
+    ctx.setLineDash([]);
+    disc(ctx, hand, handRadius, color, palette, px);
+    ctx.beginPath();
+    ctx.arc(hand.x, hand.y, handRadius * 0.4, 0, Math.PI * 2);
+    ctx.fillStyle = palette.tagText;
+    ctx.fill();
+  }
 }
 
 function drawGaze(ctx, head, gaze, headRadius, px, color, palette) {

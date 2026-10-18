@@ -68,3 +68,46 @@ Source: `NatationIII_choré_synchro.pdf` and `Nat_III_figures_synchro.pdf`
 - `package.json` only sets `"type": "module"` and two scripts; **no dependencies**.
   `npm start` uses Python's built-in static server.
 - Exam PDFs and audio files are listed in `.gitignore` (`*.pdf`, `*.wav`, `*.mp3`, …).
+
+## Version 2 (after the team's feedback)
+
+Confirmed by the user:
+- Every swimmer performs every imposed figure.
+- The team cuts the music themselves, with a fade at the end (set T0 in the page).
+- Pool: 25 m, 6 lanes (≈ 15 m wide), depth from 2.0 m at one end to about 1.4 m
+  at the other. Assumed: deep end on the **left**, shallow end on the **right**
+  as seen from the public (swap the depths in the settings and the `STAGE_X` / `LIFT_X`
+  signs in the data file if it is the other way round).
+- Public on the long side (same side as the judges), roughly in the middle.
+  Start on the **opposite** deck, then cross towards the public.
+- Lift allowed where the floor can be reached: A carries E on his shoulders and
+  pushes her into a back flip. The routine ends in the shallow end.
+- Halloween theme; the candy bucket is still to be discussed (a "bonbons ?" slot
+  is marked at 27.1).
+
+Changes:
+- **Hard figures first**: ballet leg at 0:34, flamingo right after (0:43–0:55),
+  both on the spot in the star circle. Then wheel, oyster cascade, somersault.
+  The last 40 s are lower effort: swim to the shallow end, lift, arm gestures, final pose.
+- **Realistic travel speeds**, now checked automatically: at most 0.55 m/s on the
+  front (heads-up breaststroke), 0.35 m/s upright, 0.3 m/s on the back. Every move in
+  v2 is under these limits; the crossing towards the public is a slow 13 s swim.
+- The whole routine is shifted a little towards the shallow end (`STAGE_X = 4`), close
+  to the public (`STAGE_Y = 1`, i.e. about 6 m from their side).
+- **Arms**: new `arms` pose field (drawn in both views) and a "Bras / mains" column.
+  Never two arms out of the water while swimming (only on the deck and during the lift).
+- **Chorus dance** (times given by the user, in water counts): the chorus starts at 5.1
+  and 19.1, the "H" of "hands" falls on 5.5, 7.5, 19.5 and 21.5. The same short dance is
+  repeated each time to make it easier to learn (count 3 head right, count 5 right hand
+  up and waving towards the public, count 7 arm back in the water). It is written once,
+  as the `handsDance()` function in the data file. The oyster moved earlier (17.1) and the
+  somersault is now done all together (20.5) to fit around the chorus.
+- **No standing** in the shallow end (rule): upright swimmers are eggbeating; only A
+  touches the floor during the lift, which is allowed.
+- **Lift**: new `elevation` pose field; the side view draws the sloping floor, and
+  swimmers in the shallow end stand on it.
+- Final pose: a fan facing the public, Mary at the tip with one arm up, the four
+  men pointing at her.
+
+Safety notes for the lift (also in the table): E lands feet or back first, never head
+first, in ≥ 1.4 m of water, with nobody behind her. Check with the teachers.

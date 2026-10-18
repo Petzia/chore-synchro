@@ -11,7 +11,7 @@ export function makeChoreography() {
   });
   return {
     music: { bpm: 100, t0: 10 },
-    pool: { length: 25, width: 12.5 },
+    pool: { length: 25, width: 12.5, depthLeft: 2, depthRight: 2 },
     poolsideEights: 1,
     end: '27.1',
     team: ids.map((id) => ({ id, initials: id, color: '#123456' })),

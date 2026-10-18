@@ -8,6 +8,8 @@ const NUMBER_FIELDS = {
   bpm: 'bpm',
   'pool-length': 'poolLength',
   'pool-width': 'poolWidth',
+  'depth-left': 'depthLeft',
+  'depth-right': 'depthRight',
 };
 
 /**
@@ -51,6 +53,8 @@ export function createSettingsForm(doc, team, onChange) {
       doc.getElementById('bpm').value = String(settings.bpm);
       doc.getElementById('pool-length').value = String(settings.poolLength);
       doc.getElementById('pool-width').value = String(settings.poolWidth);
+      doc.getElementById('depth-left').value = String(settings.depthLeft);
+      doc.getElementById('depth-right').value = String(settings.depthRight);
       for (const input of swimmerContainer.querySelectorAll('input')) {
         const swimmer = settings.swimmers[input.dataset.swimmer];
         input.value = input.type === 'color' ? swimmer.color : swimmer.initials;

@@ -30,8 +30,8 @@ test('personal note shows body, gaze target and delay', () => {
   const model = resolveChoreography(choreography, choreography.pool);
   const team = choreography.team.map((swimmer) => ({ ...swimmer, initials: `${swimmer.id}x` }));
   const lookAtMary = model.steps.find((step) => step.at === 'P3.1');
-  assert.equal(personalNote(lookAtMary, team[0], team), 'debout · regard vers Ex');
-  const cascade = model.steps.find((step) => step.at === '18.1');
+  assert.equal(personalNote(lookAtMary, team[0], team), 'debout · regard vers Ex · bras tendu (pointe)');
+  const cascade = model.steps.find((step) => step.at === '17.1');
   assert.match(personalNote(cascade, team[4], team), /carpé · regard : visage dans l'eau · départ \+8 temps/);
 });
 
@@ -43,4 +43,13 @@ test('a per-swimmer spin override turns the other way', () => {
   const end = model.steps[2].startBeat + 4;
   assert.equal(poseAt(model, 'A', end).heading, 90 + 360);
   assert.equal(poseAt(model, 'E', end).heading, 90 - 360);
+});
+
+test('everyone waves a hand on each "hands" of the chorus', () => {
+  const model = resolveChoreography(choreography, choreography.pool);
+  for (const label of ['5.5', '7.5', '19.5', '21.5']) {
+    const step = model.steps.find((candidate) => candidate.at === label);
+    assert.ok(step, `step ${label} exists`);
+    for (const id of model.ids) assert.equal(step.poses[id].arms, 'wave', `${id} at ${label}`);
+  }
 });

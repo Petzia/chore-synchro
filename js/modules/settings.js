@@ -9,6 +9,8 @@ export const LIMITS = {
   t0: [0, 600],
   poolLength: [10, 60],
   poolWidth: [5, 30],
+  depthLeft: [0.8, 6],
+  depthRight: [0.8, 6],
 };
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 const INITIALS = /^[\p{L}\p{N}]{1,3}$/u;
@@ -19,6 +21,8 @@ export function defaultSettings(choreography) {
     t0: choreography.music.t0,
     poolLength: choreography.pool.length,
     poolWidth: choreography.pool.width,
+    depthLeft: choreography.pool.depthLeft,
+    depthRight: choreography.pool.depthRight,
     speed: 1,
     focus: '',
     swimmers: Object.fromEntries(

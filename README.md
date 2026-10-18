@@ -3,8 +3,8 @@
 A web page to learn and rehearse an artistic swimming routine (team of 5,
 University of Fribourg exam). It plays your music file and shows, in sync:
 
-- the pool seen from above (positions, body orientation, legs, **head and gaze**);
-- a side view (who is at the surface, who is under water);
+- the pool seen from above (positions, body orientation, legs, arms, **head and gaze**);
+- a side view (who is at the surface, who is under water, the sloping pool floor, lifts);
 - the exam timer (starts at the water entry, warns until 2:00 is reached);
 - the 8-counts;
 - the full choreography table (click a row to jump there; printable).
@@ -43,7 +43,8 @@ Settings → Pages → "Deploy from a branch" → `main` / root. Nothing else to
      play it, pause on the water entry beat and click **T0 = position actuelle**.
    - **Tempo**: 100 BPM (measured). **Tap tempo** to check by ear; **×2 / ÷2** fixes
      a tempo read at half or double speed.
-   - Pool size, swimmers' colours and initials. Settings are remembered in the browser.
+   - Pool size and depth at each end (left / right as seen from the public),
+     swimmers' colours and initials. Settings are remembered in the browser.
 3. Play, pause (Space), slow down (0.5×, 0.75×), jump one eight back/forward (← →).
 4. **A / B / Boucle**: loop a passage. **Boucler l'étape** loops the current row.
 5. **Mes mouvements**: pick a swimmer to dim the others and add a "Pour …" column
@@ -80,6 +81,7 @@ changing the T0 / BPM settings, not the file.
   element: 'Huître en cascade',
   formation: 'Carré, chacun sur place',
   head: 'Visage vers les genoux',
+  hands: 'Mains aux chevilles',  // "Bras / mains" column
   story: 'Un à un, ils tombent sous son charme.',
   notes: 'A sur 1, D sur 3…',
   transition: 1,              // beats to reach the new pose (default 4)
@@ -95,6 +97,9 @@ changing the T0 / BPM settings, not the file.
 Required in every step: `at`, `phase`, `intensity`, `element`.
 Anything not given keeps its previous value, so most steps are short.
 
+At the top of the file, `pool: { length, width, depthLeft, depthRight }` gives the
+default pool (metres; left / right as seen from the public).
+
 Pose fields (below), `spin` and `flip` can be given in `pose` (everyone),
 `place` (positions per swimmer) or `swimmers` (per-swimmer overrides; the most
 specific wins). Inside `swimmers`, `transition` and `note` (shown in the
@@ -109,9 +114,15 @@ specific wins). Inside `swimmers`, `transition` and `note` (shown in the
 | `body` | `standing`, `sitting`, `vertical`, `back`, `front`, `tuck`, `pike` |
 | `legs` | 0 = closed … 1 = wide open (star) |
 | `lift` | 0 = flat, 0.5 = knee up (sailboat / cuvette), 1 = leg vertical |
-| `depth` | 0 = surface … 1 = sunk |
+| `depth` | 0 = surface … 1 = sunk (stops at the pool floor in the side view) |
+| `elevation` | 0–2 m above the normal position: someone on shoulders (0.2), a jump in the air (1.8) |
+| `arms` | (hidden under water and in a tuck or pike)  `'down'` (in the water, not drawn), `'rightUp'`, `'leftUp'`, `'bothUp'`, `'rightSide'`, `'leftSide'`, `'point'` (in the gaze direction), `'wave'` (one hand waving on the beat), `'claw'` (Halloween claw near the face). Hidden under water and in a tuck or pike |
 | `pitch` | internal (somersault rotation), set only through `flip` |
 | `gaze` | `'up'` (ceiling), `'down'` (face in water), `'judges'`, `'ahead'`, `'left'`, `'right'`, `'center'`, a swimmer id (`'E'`), or an angle |
+
+The **Vérification** panel also warns when a swimmer must travel faster than a
+beginner can (0.55 m/s swimming on the front, 0.35 m/s upright, 0.3 m/s on the
+back, almost nothing in a tuck or pike), or stays too long under water.
 
 `js/data/formations.js` has helpers to place the 5 swimmers: `line`, `circle`
 (the star), `wedge` (arrow / V) and `dice` (4 corners + centre).

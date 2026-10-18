@@ -32,11 +32,25 @@ export const INTENSITIES = { low: 'Faible', medium: 'Moyen', high: 'Fort' };
 
 export const PHASES = { poolside: 'Bord', water: 'Eau' };
 
+// Arm positions. 'down' = both arms in the water (sculling), nothing to show.
+// Left / right are the swimmer's own sides. 'point' points in the gaze direction.
+export const ARM_LABELS = {
+  down: 'bras dans l\'eau',
+  rightUp: 'bras droit levé',
+  leftUp: 'bras gauche levé',
+  bothUp: 'deux bras levés',
+  rightSide: 'bras droit sur le côté',
+  leftSide: 'bras gauche sur le côté',
+  point: 'bras tendu (pointe)',
+  wave: 'main qui ondule',
+  claw: 'main griffe',
+};
+
 export const GAZE_KEYWORDS = ['up', 'down', 'judges', 'ahead', 'left', 'right', 'center'];
 
 export const DEFAULT_TRANSITION = 4;
 
-const DEFAULT_POSE = { body: 'back', legs: 0, depth: 0, lift: 0, pitch: 0, gazeTarget: 'up' };
+const DEFAULT_POSE = { body: 'back', legs: 0, depth: 0, lift: 0, pitch: 0, elevation: 0, arms: 'down', gazeTarget: 'up' };
 
 // How each field is interpolated.
 const FIELD_KINDS = {
@@ -47,8 +61,10 @@ const FIELD_KINDS = {
   depth: 'number',
   lift: 'number',
   pitch: 'number',
+  elevation: 'number',
   gaze: 'angle',
   body: 'discrete',
+  arms: 'discrete',
 };
 
 export const POSE_FIELDS = Object.keys(FIELD_KINDS);
@@ -116,7 +132,7 @@ function resolvePoses(step, previous, ids, pool) {
     const wanted = { ...step.pose, ...step.place?.[id], ...step.swimmers?.[id] };
     const pose = { ...before };
 
-    for (const field of ['x', 'body', 'legs', 'depth', 'lift']) {
+    for (const field of ['x', 'body', 'legs', 'depth', 'lift', 'elevation', 'arms']) {
       if (wanted[field] !== undefined) pose[field] = wanted[field];
     }
     if (wanted.y !== undefined) pose.y = resolveY(wanted.y, pool);
@@ -138,6 +154,13 @@ function resolvePoses(step, previous, ids, pool) {
   return poses;
 }
 
+/** Absolute direction of the swimmer's own right or left side. */
+export function sideDirection(pose, side) {
+  // Lying on the back mirrors left and right compared to standing or lying face down.
+  const rightTurn = pose.body === 'back' ? -90 : 90;
+  return normalizeAngle(pose.heading + (side === 'right' ? rightTurn : -rightTurn));
+}
+
 /**
  * Turns a gaze keyword into an absolute direction, or keeps 'up' / 'down'.
  * 'up' = looking at the ceiling, 'down' = face in the water.
@@ -148,11 +171,7 @@ export function resolveGaze(pose, poses) {
   if (target === 'up' || target === 'down') return target;
   if (target === 'judges') return 90;
   if (target === 'ahead') return normalizeAngle(pose.heading);
-  if (target === 'left' || target === 'right') {
-    // Lying on the back mirrors left and right compared to standing or lying face down.
-    const rightTurn = pose.body === 'back' ? -90 : 90;
-    return normalizeAngle(pose.heading + (target === 'right' ? rightTurn : -rightTurn));
-  }
+  if (target === 'left' || target === 'right') return sideDirection(pose, target);
   if (target === 'center') {
     const all = Object.values(poses);
     const centre = {
