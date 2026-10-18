@@ -3,6 +3,7 @@
 
 import { countToBeat, secondsPerBeat } from './counts.js';
 import {
+  ARM_LABELS,
   BODIES,
   GAZE_KEYWORDS,
   IMPOSED_FIGURES,
@@ -18,6 +19,11 @@ export const MIN_WATER_SECONDS = 120;
 export const MAX_APNEA_SECONDS = 8;
 export const MIN_BREATH_GAP_SECONDS = 8;
 const UNDERWATER_DEPTH = 0.5;
+// Realistic travel speeds for beginners (metres per second), by body position.
+export const SPEED_LIMITS = { front: 0.55, vertical: 0.35, back: 0.3 };
+const STILL_SPEED_LIMIT = 0.15;
+export const MAX_ELEVATION = 2; // what the side view can show above the water // tuck, pike: these figures are done on the spot
+const LAND_BODIES = ['standing', 'sitting'];
 const SAMPLES_PER_BEAT = 4;
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 const Y_KEYWORDS = ['deck', 'edge', 'wall'];
@@ -58,7 +64,7 @@ export function validateChoreography(choreography, { pool, bpm }) {
   if (missing.length > 0) {
     errors.push(`Figures imposées manquantes : ${missing.map((key) => IMPOSED_FIGURES[key]).join(', ')}.`);
   }
-  warnings.push(...checkPoolBounds(model, pool), ...checkBreathing(model, seconds));
+  warnings.push(...checkPoolBounds(model, pool), ...checkSpeeds(model, seconds), ...checkBreathing(model, seconds));
 
   return {
     errors,
@@ -83,6 +89,10 @@ function checkStructure(choreography) {
       errors.push(`Nageur ${swimmer.id} : initiales manquantes.`);
     }
     if (!HEX_COLOR.test(swimmer.color ?? '')) errors.push(`Nageur ${swimmer.id} : couleur invalide.`);
+  }
+  const pool = choreography.pool ?? {};
+  for (const field of ['length', 'width', 'depthLeft', 'depthRight']) {
+    if (!(Number.isFinite(pool[field]) && pool[field] > 0)) errors.push(`"pool.${field}" doit être un nombre positif (mètres).`);
   }
   if (!Number.isInteger(choreography.poolsideEights) || choreography.poolsideEights < 0) {
     errors.push('"poolsideEights" doit être un nombre entier positif.');
@@ -139,6 +149,9 @@ function checkStep(step, name, beat, ids) {
     errors.push(`${name} : figure imposée inconnue "${step.imposed}".`);
   }
   if (typeof step.element !== 'string' || step.element === '') errors.push(`${name} : "element" manquant.`);
+  for (const field of ['formation', 'head', 'hands', 'story', 'notes']) {
+    if (step[field] !== undefined && typeof step[field] !== 'string') errors.push(`${name} : "${field}" doit être un texte.`);
+  }
   if (step.transition !== undefined && !isNonNegative(step.transition)) {
     errors.push(`${name} : "transition" doit être un nombre de temps ≥ 0.`);
   }
@@ -168,6 +181,10 @@ function checkPose(pose, name, ids) {
   }
   if (pose.y !== undefined && !Number.isFinite(pose.y) && !Y_KEYWORDS.includes(pose.y)) {
     errors.push(`${name} : "y" doit être un nombre ou ${Y_KEYWORDS.join(' / ')}.`);
+  }
+  if (pose.arms !== undefined && !Object.hasOwn(ARM_LABELS, pose.arms)) errors.push(`${name} : position des bras inconnue "${pose.arms}".`);
+  if (pose.elevation !== undefined && !(pose.elevation >= 0 && pose.elevation <= MAX_ELEVATION)) {
+    errors.push(`${name} : "elevation" doit être entre 0 et ${MAX_ELEVATION} m.`);
   }
   if (pose.body !== undefined && !BODIES.includes(pose.body)) errors.push(`${name} : position du corps inconnue "${pose.body}".`);
   for (const field of ['legs', 'depth', 'lift']) {
@@ -217,6 +234,42 @@ function checkPoolBounds(model, pool) {
       }
     }
   }
+  return warnings;
+}
+
+/** Warns when a swimmer must travel faster than a beginner realistically can. */
+export function checkSpeeds(model, seconds) {
+  const warnings = [];
+  model.steps.forEach((step, index) => {
+    if (index === 0 || step.phase !== 'water') return;
+    const previous = model.steps[index - 1];
+    for (const id of model.ids) {
+      const from = previous.poses[id];
+      const to = step.poses[id];
+      // Getting into the water, climbing on someone or flying through the air is not swimming.
+      if (LAND_BODIES.includes(from.body) || LAND_BODIES.includes(to.body)) continue;
+      if (from.elevation > 0 || to.elevation > 0) continue;
+      const distance = Math.hypot(to.x - from.x, to.y - from.y);
+      if (distance < 0.1) continue;
+      const segment = model.tracks[id].x.segments.concat(model.tracks[id].y.segments)
+        .find((candidate) => candidate.stepIndex === step.index);
+      const duration = segment ? seconds(segment.end - segment.start) : 0;
+      if (duration === 0) {
+        warnings.push(`Étape ${step.at} : ${id} se déplace de ${distance.toFixed(1)} m instantanément (transition 0).`);
+        continue;
+      }
+      // The body may change during the move (e.g. swim, then tuck): allow the faster of both.
+      const limitOf = (body) => SPEED_LIMITS[body] ?? STILL_SPEED_LIMIT;
+      const limit = Math.max(limitOf(from.body), limitOf(to.body));
+      const speed = distance / duration;
+      if (speed > limit) {
+        warnings.push(
+          `Étape ${step.at} : ${id} doit parcourir ${distance.toFixed(1)} m en ${duration.toFixed(1)} s `
+          + `(${speed.toFixed(2)} m/s, max conseillé ${limit} m/s).`,
+        );
+      }
+    }
+  });
   return warnings;
 }
 

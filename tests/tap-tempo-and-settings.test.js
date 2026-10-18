@@ -43,3 +43,11 @@ test('garbage in storage falls back to defaults', () => {
   assert.deepEqual(sanitizeSettings(null, defaults), defaults);
   assert.deepEqual(sanitizeSettings('oops', defaults), defaults);
 });
+
+test('old stored settings without pool depths keep the default depths', () => {
+  const defaults = defaultSettings(choreography);
+  const settings = sanitizeSettings({ bpm: 98, depthLeft: 99 }, defaults);
+  assert.equal(settings.bpm, 98);
+  assert.equal(settings.depthLeft, defaults.depthLeft);
+  assert.equal(settings.depthRight, defaults.depthRight);
+});

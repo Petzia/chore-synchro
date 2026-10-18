@@ -30,8 +30,8 @@ test('personal note shows body, gaze target and delay', () => {
   const model = resolveChoreography(choreography, choreography.pool);
   const team = choreography.team.map((swimmer) => ({ ...swimmer, initials: `${swimmer.id}x` }));
   const lookAtMary = model.steps.find((step) => step.at === 'P3.1');
-  assert.equal(personalNote(lookAtMary, team[0], team), 'debout · regard vers Ex');
-  const cascade = model.steps.find((step) => step.at === '18.1');
+  assert.equal(personalNote(lookAtMary, team[0], team), 'debout · regard vers Ex · bras tendu (pointe)');
+  const cascade = model.steps.find((step) => step.at === '17.5');
   assert.match(personalNote(cascade, team[4], team), /carpé · regard : visage dans l'eau · départ \+8 temps/);
 });
 

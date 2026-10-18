@@ -2,7 +2,7 @@
 // All text goes through textContent (never innerHTML).
 
 import { beatToCount, beatToSongTime, formatTime, secondsPerBeat } from './counts.js';
-import { BODY_LABELS, IMPOSED_FIGURES, INTENSITIES, PHASES } from './choreography-model.js';
+import { ARM_LABELS, BODY_LABELS, IMPOSED_FIGURES, INTENSITIES, PHASES } from './choreography-model.js';
 
 const COLUMNS = [
   'Chanson',
@@ -12,6 +12,7 @@ const COLUMNS = [
   'Élément',
   'Formation / déplacement',
   'Tête et regard',
+  'Bras / mains',
   'Effort',
   'Fil rouge',
   'Remarques',
@@ -115,6 +116,7 @@ function stepRow(step, { timing, poolsideEights, team, focusSwimmer }) {
     element,
     cell(step.formation ?? ''),
     cell(step.head ?? ''),
+    cell(step.hands ?? ''),
     intensity,
     cell(step.story ?? ''),
     cell(step.notes ?? ''),
@@ -132,6 +134,7 @@ export function personalNote(step, swimmer, team) {
   if (lookedAt) parts.push(`regard vers ${lookedAt.initials}`);
   else if (typeof target === 'number') parts.push(`regard ${Math.round(target)}°`);
   else parts.push(`regard : ${GAZE_LABELS[target]}`);
+  if (pose.arms !== 'down') parts.push(ARM_LABELS[pose.arms]);
   const delay = step.delays[swimmer.id];
   if (delay > 0) parts.push(`départ +${delay} temps`);
   const note = step.swimmers?.[swimmer.id]?.note;

@@ -106,3 +106,43 @@ test('positions and rotations must be numbers', () => {
   assert.ok(errors.some((e) => e.includes('"y"')));
   assert.ok(errors.some((e) => e.includes('"spin"')));
 });
+
+test('travelling too fast for beginners is a warning', () => {
+  const choreo = makeChoreography();
+  choreo.steps[2].place = { A: { x: -6, y: 0, heading: 90 } };
+  choreo.steps[2].transition = 4;
+  const { warnings } = validateChoreography(choreo, OPTIONS);
+  assert.ok(warnings.some((w) => w.includes('3.1') && w.includes('A doit parcourir')), warnings.join('\n'));
+});
+
+test('unknown arm positions are reported', () => {
+  const choreo = makeChoreography();
+  choreo.steps[2].pose.arms = 'jazzHands';
+  assert.ok(validateChoreography(choreo, OPTIONS).errors.some((e) => e.includes('bras')));
+});
+
+test('lifts and jumps are not counted as swimming speed', () => {
+  const choreo = makeChoreography();
+  choreo.steps[2].place = { E: { x: 0, y: 0, heading: 90 } };
+  choreo.steps[2].swimmers = { E: { elevation: 1 } };
+  choreo.steps[2].transition = 1;
+  const { errors, warnings } = validateChoreography(choreo, OPTIONS);
+  assert.deepEqual(errors, []);
+  assert.ok(!warnings.some((w) => w.includes('E doit parcourir')), warnings.join('\n'));
+});
+
+test('an instant move is reported clearly', () => {
+  const choreo = makeChoreography();
+  choreo.steps[2].place = { A: { x: -2, y: 0, heading: 90 } };
+  choreo.steps[2].transition = 0;
+  assert.ok(validateChoreography(choreo, OPTIONS).warnings.some((w) => w.includes('instantanément')));
+});
+
+test('elevation and pool depths are checked', () => {
+  const high = makeChoreography();
+  high.steps[2].pose.elevation = 5;
+  assert.ok(validateChoreography(high, OPTIONS).errors.some((e) => e.includes('"elevation"')));
+  const noDepth = makeChoreography();
+  delete noDepth.pool.depthRight;
+  assert.ok(validateChoreography(noDepth, OPTIONS).errors.some((e) => e.includes('pool.depthRight')));
+});
